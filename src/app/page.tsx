@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 
 export default function Home() {
   const { data: session } = useSession()
+  const isRestaurantOwner = session?.user && (session.user as any).userType === 'restaurant'
 
   return (
     <div className="min-h-screen">
@@ -18,11 +19,16 @@ export default function Home() {
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/restaurants" className="text-gray-600 hover:text-primary">
-                Restaurants
+                Restaurantes
               </Link>
               {session ? (
                 <div className="flex items-center gap-4">
                   <span className="text-gray-600">{session.user?.name}</span>
+                  {isRestaurantOwner && (
+                    <Link href="/create" className="text-gray-600 hover:text-primary">
+                      Criar Restaurante
+                    </Link>
+                  )}
                   <button
                     onClick={() => signOut()}
                     className="text-gray-600 hover:text-primary"
@@ -49,7 +55,7 @@ export default function Home() {
       <section className="relative h-screen flex items-center">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/hero-bg.jpg"
+            src="/images/restaurant.png"
             alt="Restaurant background"
             fill
             className="object-cover brightness-50"
@@ -61,16 +67,22 @@ export default function Home() {
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               Encontre a sua próxima experiência gastronômica
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-black">
+            <p className="text-xl md:text-2xl mb-8 text-white">
               Encontre e reserve os melhores restaurantes da sua zona.
             </p>
             <div className="flex gap-4">
               <Link href="/restaurants" className="btn-primary">
                 Ver Restaurantes
               </Link>
-              <Link href="/auth/signup?type=restaurant" className="btn-secondary">
-                Criar o seu Restaurante!
-              </Link>
+              {isRestaurantOwner ? (
+                <Link href="/create" className="btn-secondary">
+                  Criar o seu Restaurante
+                </Link>
+              ) : (
+                <Link href="/auth/signup?type=restaurant" className="btn-secondary">
+                  Tornar-se Parceiro
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -119,9 +131,15 @@ export default function Home() {
           <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-600">
             Junte-se ao FastTable para atingir mais clientes e simplificar o seu processo de reserva.
           </p>
-          <Link href="/auth/signup?type=restaurant" className="btn-primary">
-            Começar agora!
-          </Link>
+          {isRestaurantOwner ? (
+            <Link href="/create" className="btn-primary">
+              Criar Restaurante
+            </Link>
+          ) : (
+            <Link href="/auth/signup?type=restaurant" className="btn-primary">
+              Começar agora!
+            </Link>
+          )}
         </div>
       </section>
     </div>

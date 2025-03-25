@@ -11,9 +11,13 @@ export default function SignIn() {
   const [password, setPassword] = useState('')
   const [userType, setUserType] = useState('customer')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    setIsLoading(true)
+
     try {
       const result = await signIn('credentials', {
         email,
@@ -24,15 +28,19 @@ export default function SignIn() {
 
       if (result?.error) {
         setError('Credenciais inválidas')
-      } else {
-        if (userType === 'restaurant') {
-          router.push('/admin/dashboard')
-        } else {
-          router.push('/')
-        }
+        return
+      }
+
+      if (result?.ok) {
+        // Wait a bit for the session to be updated
+        await new Promise(resolve => setTimeout(resolve, 500))
+        window.location.href = userType === 'restaurant' ? '/create' : '/'
       }
     } catch (error) {
-      setError('Ocorreu um erro')
+      console.error('Sign in error:', error)
+      setError('Ocorreu um erro ao iniciar sessão')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -68,6 +76,7 @@ export default function SignIn() {
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                disabled={isLoading}
               >
                 <option value="customer">Cliente</option>
                 <option value="restaurant">Proprietário de Restaurante</option>
@@ -88,6 +97,7 @@ export default function SignIn() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder="Endereço de email"
+                disabled={isLoading}
               />
             </div>
 
@@ -105,6 +115,7 @@ export default function SignIn() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder="Palavra-passe"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -112,9 +123,10 @@ export default function SignIn() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
             >
-              Iniciar Sessão
+              {isLoading ? 'A iniciar sessão...' : 'Iniciar Sessão'}
             </button>
           </div>
 
@@ -140,7 +152,8 @@ export default function SignIn() {
           <div className="mt-6">
             <button
               onClick={() => signIn('google')}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              disabled={isLoading}
+              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path

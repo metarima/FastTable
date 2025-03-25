@@ -1,46 +1,90 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-// Dados de exemplo - serão substituídos por dados reais da base de dados mais tarde
-const MOCK_RESTAURANTS = [
-  {
-    id: '1',
-    name: 'O Italiano',
-    cuisine: 'Italiana',
-    rating: 4.5,
-    priceRange: '$$',
-    image: '/restaurant1.jpg',
-    description: 'Autêntica cozinha italiana num ambiente acolhedor',
-    address: 'Rua Principal 123, Cidade',
-  },
-  {
-    id: '2',
-    name: 'Sushi Master',
-    cuisine: 'Japonesa',
-    rating: 4.8,
-    priceRange: '$$$',
-    image: '/restaurant2.jpg',
-    description: 'Sushi fresco e iguarias japonesas',
-    address: 'Rua do Carvalho 456, Cidade',
-  },
-  // Adicionar mais restaurantes...
-]
+type Restaurant = {
+  id: string
+  name: string
+  description: string
+  address: string
+  cuisine: string
+  email: string
+  phone: string
+  imageUrl?: string
+  owner: {
+    name: string
+    email: string
+  }
+}
 
 export default function RestaurantListing() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCuisine, setSelectedCuisine] = useState('')
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const cuisineTypes = ['Todas', 'Italiana', 'Japonesa', 'Indiana', 'Mexicana', 'Chinesa', 'Portuguesa']
+  const cuisineTypes = ['Todas', 'Portuguesa', 'Italiana', 'Japonesa', 'Chinesa', 'Indiana', 'Mexicana', 'Mediterrânea', 'Brasileira', 'Fast Food', 'Vegetariana', 'Vegana', 'Outra']
 
-  const filteredRestaurants = MOCK_RESTAURANTS.filter(restaurant => {
-    const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restaurant.description.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const res = await fetch('/api/restaurants')
+        if (!res.ok) {
+          throw new Error('Erro ao carregar restaurantes')
+        }
+        const data = await res.json()
+        setRestaurants(data)
+      } catch (error) {
+        console.error('Error fetching restaurants:', error)
+        setError('Erro ao carregar restaurantes')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchRestaurants()
+  }, [])
+
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    const matchesSearch = 
+      restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      restaurant.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      restaurant.address.toLowerCase().includes(searchTerm.toLowerCase())
+    
     const matchesCuisine = !selectedCuisine || selectedCuisine === 'Todas' || restaurant.cuisine === selectedCuisine
+    
     return matchesSearch && matchesCuisine
   })
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">A carregar restaurantes...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -83,7 +127,7 @@ export default function RestaurantListing() {
             >
               <div className="relative h-48">
                 <Image
-                  src={restaurant.image}
+                  src={restaurant.imageUrl || '/images/restaurant-placeholder.jpg'}
                   alt={restaurant.name}
                   fill
                   className="object-cover"
@@ -92,14 +136,14 @@ export default function RestaurantListing() {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-semibold">{restaurant.name}</h3>
-                  <div className="flex items-center">
-                    <span className="text-yellow-400">★</span>
-                    <span className="ml-1">{restaurant.rating}</span>
-                  </div>
                 </div>
-                <p className="text-gray-600 text-sm mb-2">{restaurant.cuisine} • {restaurant.priceRange}</p>
+                <p className="text-gray-600 text-sm mb-2">{restaurant.cuisine}</p>
                 <p className="text-gray-500 text-sm mb-4">{restaurant.address}</p>
                 <p className="text-gray-600 line-clamp-2">{restaurant.description}</p>
+                <div className="mt-4 text-sm text-gray-500">
+                  <p>Contacto: {restaurant.phone || 'Não disponível'}</p>
+                  <p>Email: {restaurant.email || 'Não disponível'}</p>
+                </div>
               </div>
             </Link>
           ))}
