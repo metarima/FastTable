@@ -1,9 +1,50 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSession, signIn, signOut } from 'next-auth/react'
 
 export default function Home() {
+  const { data: session } = useSession()
+
   return (
     <div className="min-h-screen">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm">
+        <div className="container-custom py-4">
+          <div className="flex justify-between items-center">
+            <Link href="/" className="text-2xl font-bold text-primary">
+              FastTable
+            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/restaurants" className="text-gray-600 hover:text-primary">
+                Restaurants
+              </Link>
+              {session ? (
+                <div className="flex items-center gap-4">
+                  <span className="text-gray-600">{session.user?.name}</span>
+                  <button
+                    onClick={() => signOut()}
+                    className="text-gray-600 hover:text-primary"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <Link href="/auth/signin" className="text-gray-600 hover:text-primary">
+                    Sign In
+                  </Link>
+                  <Link href="/auth/signup" className="btn-primary">
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative h-screen flex items-center">
         <div className="absolute inset-0 z-0">
@@ -18,17 +59,17 @@ export default function Home() {
         <div className="container-custom relative z-10 text-white">
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Crie o seu restaurante sonho
+              Encontre a sua próxima experiência gastronômica
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-black">
-              Construa sua presença digital com um menu interativo e um sistema de reserva sem esforço.
+              Encontre e reserve os melhores restaurantes da sua zona.
             </p>
             <div className="flex gap-4">
-              <Link href="/create" className="btn-primary">
-                Começar
+              <Link href="/restaurants" className="btn-primary">
+                Ver Restaurantes
               </Link>
-              <Link href="/explore" className="btn-secondary">
-                Explorar Restaurantes
+              <Link href="/auth/signup?type=restaurant" className="btn-secondary">
+                Criar o seu Restaurante!
               </Link>
             </div>
           </div>
@@ -38,48 +79,48 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container-custom">
-          <h2 className="text-4xl font-bold text-center mb-16">Por que escolher FastTable?</h2>
+          <h2 className="text-4xl font-bold text-center mb-16">Como funciona?</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Encontrar</h3>
+              <p className="text-gray-600">Pesquise por culinária, localização ou nome do restaurante.</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Menu Interativo</h3>
-              <p className="text-gray-600">Crie e gerencie seu menu digitalmente com facilidades de atualizações e apresentação atraente.</p>
+              <h3 className="text-xl font-semibold mb-4">Reservar</h3>
+              <p className="text-gray-600">Faça reservas com apenas alguns cliques.</p>
             </div>
-            <div className="p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Sistema de Reserva</h3>
-              <p className="text-gray-600">Permite que os clientes reserve mesas online de forma intuitiva e eficiente.</p>
-            </div>
-            <div className="p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Rápido e Confiável</h3>
-              <p className="text-gray-600">Construído com tecnologia moderna para garantir que a presença digital do seu restaurante esteja sempre online e funcionando.</p>
+              <h3 className="text-xl font-semibold mb-4">Aproveite</h3>
+              <p className="text-gray-600">Experimente uma refeição incrível no restaurante escolhido.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary text-white">
+      <section className="py-20 bg-gray-50">
         <div className="container-custom text-center">
-          <h2 className="text-4xl font-bold mb-6">Pronto a começar?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Junte-se a milhares de restaurantes que confiam em FastTable para gerenciar sua presença digital.
+          <h2 className="text-4xl font-bold mb-6">Tem um Restaurante?</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-600">
+            Junte-se ao FastTable para atingir mais clientes e simplificar o seu processo de reserva.
           </p>
-          <Link href="/create" className="btn-secondary">
-            Crie o seu restaurante!
+          <Link href="/auth/signup?type=restaurant" className="btn-primary">
+            Começar agora!
           </Link>
         </div>
       </section>

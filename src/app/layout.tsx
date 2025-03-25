@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { Providers } from './providers'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'FastTable - Create Your Restaurant',
-  description: 'Create and manage your restaurant with an interactive menu and booking system',
+  title: 'FastTable - Reservas de Restaurantes Simplificadas',
+  description: 'Encontre e reserve os melhores restaurantes da sua zona',
 }
 
 export default function RootLayout({
@@ -15,11 +16,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans`}>
-        <main className="min-h-screen bg-white">
+    <html lang="pt">
+      <body className={inter.className}>
+        <Providers>
           {children}
-        </main>
+        </Providers>
       </body>
     </html>
   )
