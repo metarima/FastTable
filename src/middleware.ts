@@ -17,6 +17,13 @@ export default async function middleware(request: NextRequestWithAuth) {
 
   // Route user to appropriate dashboard on root access
   if (request.nextUrl.pathname === '/') {
+    // Check if there's a 'from' parameter indicating a deliberate navigation to home
+    const fromParam = request.nextUrl.searchParams.get('from');
+    if (fromParam === 'admin') {
+      // User explicitly wants to go to homepage
+      return NextResponse.next();
+    }
+    
     if (token.userType === 'admin') {
       return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     } else if (token.userType === 'restaurant' || token.userType === 'restaurant_admin') {
