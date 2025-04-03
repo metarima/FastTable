@@ -56,7 +56,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/restaurant.png"
-            alt="Restaurant background"
+            alt="Restaurant background"0
             fill
             className="object-cover brightness-50"
             priority
@@ -79,7 +79,7 @@ export default function Home() {
                   Criar o seu Restaurante
                 </Link>
               ) : (
-                <Link href="/auth/signup?type=restaurant" className="btn-secondary">
+                <Link href="/restaurant/register" className="btn-secondary">
                   Tornar-se Parceiro
                 </Link>
               )}

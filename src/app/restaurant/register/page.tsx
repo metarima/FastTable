@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function RestaurantSignUp() {
   const router = useRouter()
@@ -16,240 +15,267 @@ export default function RestaurantSignUp() {
   const [restaurantAddress, setRestaurantAddress] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Reset error and success messages
     setError('')
     setSuccess('')
-    setIsLoading(true)
-
+    
+    // Validate passwords match
     if (password !== confirmPassword) {
-      setError('As palavras-passe não coincidem')
-      setIsLoading(false)
+      setError('As passwords não coincidem')
       return
     }
-
+    
+    // Validate password length
+    if (password.length < 6) {
+      setError('A password deve ter pelo menos 6 caracteres')
+      return
+    }
+    
+    setLoading(true)
+    
     try {
-      // Register the restaurant
-      const res = await fetch('/api/admin/register-restaurant', {
+      const response = await fetch('/api/restaurant-request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          name: ownerName,
-          email,
+          ownerName,
+          ownerEmail: email,
           password,
           restaurantName,
           restaurantDescription,
           restaurantAddress,
         }),
       })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao registar restaurante')
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setSuccess('Solicitação enviada com sucesso! Após a aprovação de um administrador, você será notificado por email.')
+        // Clear form
+        setOwnerName('')
+        setEmail('')
+        setPassword('')
+        setConfirmPassword('')
+        setRestaurantName('')
+        setRestaurantDescription('')
+        setRestaurantAddress('')
+      } else {
+        setError(data.message || 'Ocorreu um erro ao enviar a solicitação')
       }
-
-      setSuccess('Seu restaurante foi registado com sucesso! Você será redirecionado para o login em breve.')
-      
-      // Clear form
-      setOwnerName('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-      setRestaurantName('')
-      setRestaurantDescription('')
-      setRestaurantAddress('')
-      
-      // Sign in after registration
-      setTimeout(async () => {
-        await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        })
-        router.push('/create')
-      }, 3000)
     } catch (error) {
-      console.error('Restaurant registration error:', error)
-      setError(error instanceof Error ? error.message : 'Erro ao registar restaurante')
+      console.error('Error submitting restaurant request:', error)
+      setError('Ocorreu um erro ao enviar a solicitação. Por favor, tente novamente mais tarde.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Registar seu Restaurante
+            Registrar Restaurante
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Ou{' '}
-            <Link href="/auth/signin" className="font-medium text-primary hover:text-primary/80">
-              iniciar sessão na sua conta existente
-            </Link>
+            Preencha o formulário para solicitar o registro do seu restaurante
           </p>
         </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
-              {success}
-            </div>
-          )}
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Informações do Proprietário</h3>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700">
-                    Nome Completo
-                  </label>
-                  <input
-                    id="ownerName"
-                    name="ownerName"
-                    type="text"
-                    required
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Palavra-passe
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                    Confirmar Palavra-passe
-                  </label>
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
+        
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
               </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Informações do Restaurante</h3>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <label htmlFor="restaurantName" className="block text-sm font-medium text-gray-700">
-                    Nome do Restaurante
-                  </label>
-                  <input
-                    id="restaurantName"
-                    name="restaurantName"
-                    type="text"
-                    required
-                    value={restaurantName}
-                    onChange={(e) => setRestaurantName(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="restaurantAddress" className="block text-sm font-medium text-gray-700">
-                    Endereço do Restaurante
-                  </label>
-                  <input
-                    id="restaurantAddress"
-                    name="restaurantAddress"
-                    type="text"
-                    required
-                    value={restaurantAddress}
-                    onChange={(e) => setRestaurantAddress(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="restaurantDescription" className="block text-sm font-medium text-gray-700">
-                    Descrição do Restaurante
-                  </label>
-                  <textarea
-                    id="restaurantDescription"
-                    name="restaurantDescription"
-                    rows={3}
-                    value={restaurantDescription}
-                    onChange={(e) => setRestaurantDescription(e.target.value)}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    disabled={isLoading}
-                  />
-                </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  {error}
+                </p>
               </div>
             </div>
           </div>
-
+        )}
+        
+        {success && (
+          <div className="bg-green-50 border-l-4 border-green-500 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-700">
+                  {success}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">Informações do Proprietário</h3>
+            
+            <div>
+              <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700">
+                Nome Completo
+              </label>
+              <input
+                id="ownerName"
+                name="ownerName"
+                type="text"
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="Seu nome completo"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="seu.email@exemplo.com"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirmar Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="Confirme sua password"
+              />
+            </div>
+            
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Informações do Restaurante</h3>
+            </div>
+            
+            <div>
+              <label htmlFor="restaurantName" className="block text-sm font-medium text-gray-700">
+                Nome do Restaurante <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="restaurantName"
+                name="restaurantName"
+                type="text"
+                required
+                value={restaurantName}
+                onChange={(e) => setRestaurantName(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="Nome do seu restaurante"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="restaurantDescription" className="block text-sm font-medium text-gray-700">
+                Descrição
+              </label>
+              <textarea
+                id="restaurantDescription"
+                name="restaurantDescription"
+                rows={3}
+                value={restaurantDescription}
+                onChange={(e) => setRestaurantDescription(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="Breve descrição do seu restaurante"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="restaurantAddress" className="block text-sm font-medium text-gray-700">
+                Endereço <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="restaurantAddress"
+                name="restaurantAddress"
+                type="text"
+                required
+                value={restaurantAddress}
+                onChange={(e) => setRestaurantAddress(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="Endereço completo do restaurante"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <span className="text-gray-600">Já tem uma conta?</span>{' '}
+              <Link href="/auth/signin" className="font-medium text-primary hover:text-primary/80">
+                Entrar
+              </Link>
+            </div>
+            
+            <div className="text-sm">
+              <Link href="/auth/signup" className="font-medium text-primary hover:text-primary/80">
+                Criar conta normal
+              </Link>
+            </div>
+          </div>
+          
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
+              disabled={loading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                loading ? 'bg-primary/70' : 'bg-primary hover:bg-primary/90'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary`}
             >
-              {isLoading ? 'A processar...' : 'Registar Restaurante'}
+              {loading ? 'Enviando...' : 'Enviar Solicitação'}
             </button>
           </div>
+          
+          <div className="text-center text-xs text-gray-500">
+            <p>
+              Após o envio, sua solicitação será revisada por um administrador.
+              Você receberá uma notificação por email quando sua solicitação for processada.
+            </p>
+          </div>
         </form>
-
-        <div className="pt-4 text-center">
-          <p className="text-sm text-gray-600">
-            Este formulário é exclusivo para proprietários de restaurantes.{' '}
-            <Link href="/auth/signup" className="font-medium text-primary hover:text-primary/80">
-              Crie uma conta normal aqui
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   )

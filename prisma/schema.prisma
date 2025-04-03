@@ -63,3 +63,18 @@ model Restaurant {
   ownerId       String   @unique
   owner         User     @relation(fields: [ownerId], references: [id])
 }
+
+// RestaurantRequest model for pending restaurant registrations
+model RestaurantRequest {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  ownerName   String?
+  ownerEmail  String
+  password    String    // Password for new user (if owner doesn't exist)
+  status      String    @default("pending") // pending, approved, rejected
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  rejectionReason String?
+}
