@@ -11,17 +11,17 @@ export default function SuccessPage() {
             </svg>
           </div>
           
-          <h1 className="text-3xl font-bold mb-4">Restaurant Created Successfully!</h1>
+          <h1 className="text-3xl font-bold mb-4">Restaurante criado com sucesso!</h1>
           <p className="text-gray-600 mb-8">
-            Your restaurant has been created. You can now start managing your menu and accepting bookings.
+            O teu restaurante foi criado! Você pode agora começar a gerir o seu menu e a aceitar reservas.
           </p>
 
           <div className="space-y-4">
             <Link href="/dashboard" className="btn-primary block">
-              Go to Dashboard
+              Voltar para o dashboard
             </Link>
             <Link href="/" className="btn-secondary block">
-              Return to Home
+              Voltar para a home
             </Link>
           </div>
         </div>

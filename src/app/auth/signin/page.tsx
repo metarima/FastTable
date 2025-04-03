@@ -9,7 +9,6 @@ export default function SignIn() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState('customer')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -22,24 +21,36 @@ export default function SignIn() {
       const result = await signIn('credentials', {
         email,
         password,
-        userType,
         redirect: false,
       })
 
       if (result?.error) {
         setError('Credenciais inválidas')
+        setIsLoading(false)
         return
       }
 
       if (result?.ok) {
-        // Wait a bit for the session to be updated
-        await new Promise(resolve => setTimeout(resolve, 500))
-        window.location.href = userType === 'restaurant' ? '/create' : '/'
+        // Get user type to determine redirect
+        const userResponse = await fetch('/api/auth/user-type')
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          
+          if (userData.userType === 'admin') {
+            router.push('/admin/dashboard')
+          } else if (userData.userType === 'restaurant' || userData.userType === 'restaurant_admin') {
+            router.push('/admin/restaurant-dashboard')
+          } else {
+            router.push('/')
+          }
+        } else {
+          // Default redirect if user type can't be determined
+          router.push('/')
+        }
       }
     } catch (error) {
       console.error('Sign in error:', error)
       setError('Ocorreu um erro ao iniciar sessão')
-    } finally {
       setIsLoading(false)
     }
   }
@@ -57,6 +68,12 @@ export default function SignIn() {
               criar uma nova conta
             </Link>
           </p>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            É proprietário de um restaurante?{' '}
+            <Link href="/restaurant/register" className="font-medium text-primary hover:text-primary/80">
+              Registre seu restaurante aqui
+            </Link>
+          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -67,22 +84,6 @@ export default function SignIn() {
           )}
 
           <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="userType" className="sr-only">
-                Tipo de Conta
-              </label>
-              <select
-                id="userType"
-                value={userType}
-                onChange={(e) => setUserType(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                disabled={isLoading}
-              >
-                <option value="customer">Cliente</option>
-                <option value="restaurant">Proprietário de Restaurante</option>
-              </select>
-            </div>
-
             <div>
               <label htmlFor="email" className="sr-only">
                 Endereço de Email
@@ -120,22 +121,34 @@ export default function SignIn() {
             </div>
           </div>
 
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                Lembrar-me
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <a href="#" className="font-medium text-primary hover:text-primary/80">
+                Esqueceu a palavra-passe?
+              </a>
+            </div>
+          </div>
+
           <div>
             <button
               type="submit"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
             >
               {isLoading ? 'A iniciar sessão...' : 'Iniciar Sessão'}
             </button>
-          </div>
-
-          <div className="flex items-center justify-center">
-            <div className="text-sm">
-              <Link href="/auth/forgot-password" className="font-medium text-primary hover:text-primary/80">
-                Esqueceu a palavra-passe?
-              </Link>
-            </div>
           </div>
         </form>
 

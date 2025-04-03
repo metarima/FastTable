@@ -14,7 +14,7 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
-  userType      String      @default("customer")
+  userType      String      @default("customer") // Possible values: "customer", "restaurant", "admin", "restaurant_admin"
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   accounts      Account[]

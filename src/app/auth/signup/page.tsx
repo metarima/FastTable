@@ -11,7 +11,6 @@ export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [userType, setUserType] = useState('customer')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -35,7 +34,7 @@ export default function SignUp() {
           name,
           email,
           password,
-          userType,
+          userType: 'customer', // Default all users to customer
         }),
       })
 
@@ -49,7 +48,6 @@ export default function SignUp() {
       const result = await signIn('credentials', {
         email,
         password,
-        userType,
         redirect: false,
       })
 
@@ -57,12 +55,8 @@ export default function SignUp() {
         throw new Error(result.error)
       }
 
-      // Redirect based on user type
-      if (userType === 'restaurant') {
-        router.push('/admin/dashboard')
-      } else {
-        router.push('/')
-      }
+      // Redirect to homepage after signup
+      router.push('/')
     } catch (error) {
       console.error('Registration error:', error)
       setError(error instanceof Error ? error.message : 'Erro ao criar conta')
@@ -84,6 +78,12 @@ export default function SignUp() {
               iniciar sessão na sua conta existente
             </Link>
           </p>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            É proprietário de um restaurante?{' '}
+            <Link href="/restaurant/register" className="font-medium text-primary hover:text-primary/80">
+              Registre seu restaurante aqui
+            </Link>
+          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -94,22 +94,6 @@ export default function SignUp() {
           )}
 
           <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="userType" className="sr-only">
-                Tipo de Conta
-              </label>
-              <select
-                id="userType"
-                value={userType}
-                onChange={(e) => setUserType(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                disabled={isLoading}
-              >
-                <option value="customer">Cliente</option>
-                <option value="restaurant">Proprietário de Restaurante</option>
-              </select>
-            </div>
-
             <div>
               <label htmlFor="name" className="sr-only">
                 Nome Completo
