@@ -56,7 +56,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/restaurant.png"
-            alt="Restaurant background"0
+            alt="Restaurant background"
             fill
             className="object-cover brightness-50"
             priority
