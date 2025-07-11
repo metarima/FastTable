@@ -8,6 +8,7 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     const restaurants = await prisma.restaurant.findMany({
+      where: { published: true },
       include: {
         owner: {
           select: {

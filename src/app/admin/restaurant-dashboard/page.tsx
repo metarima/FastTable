@@ -23,6 +23,19 @@ export default function RestaurantDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Checklist state (replace with real checks later)
+  const [showPublish, setShowPublish] = useState(false)
+  // These would be replaced with real logic
+  const [configComplete, setConfigComplete] = useState(false)
+  const [menuComplete, setMenuComplete] = useState(false)
+  const [reservasComplete, setReservasComplete] = useState(false)
+  const allComplete = configComplete && menuComplete && reservasComplete
+
+  // Add published state (replace with real value from restaurant later)
+  const [bannerVisible, setBannerVisible] = useState(true)
+  // Replace with real published status from restaurant
+  const published = false
+
   useEffect(() => {
     if (status === 'loading') return
     
@@ -97,6 +110,21 @@ export default function RestaurantDashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Painel do Restaurante</h1>
+      {/* Info Banner */}
+      {!published && bannerVisible && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-6 rounded-md flex items-center justify-between">
+          <span>
+            <strong>O teu restaurante não está publicado.</strong> Completa todos os passos e publica para ficar visível ao público.
+          </span>
+          <button
+            onClick={() => setBannerVisible(false)}
+            className="ml-4 text-yellow-700 hover:text-yellow-900 font-bold text-lg focus:outline-none"
+            aria-label="Fechar aviso"
+          >
+            ×
+          </button>
+        </div>
+      )}
       
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between">
@@ -115,16 +143,15 @@ export default function RestaurantDashboard() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-2">Reservas</h2>
-          <p className="text-gray-600 mb-4">Gerencie as reservas do seu restaurante</p>
+          <h2 className="text-xl font-semibold mb-2">Configurações</h2>
+          <p className="text-gray-600 mb-4">Defina as informações essenciais do seu restaurante</p>
           <Link 
-            href="/admin/restaurant-dashboard/reservations" 
+            href="/admin/restaurant-dashboard/edit" 
             className="text-primary hover:underline"
           >
-            Ver Reservas →
+            Editar Configurações →
           </Link>
         </div>
-        
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-2">Menu</h2>
           <p className="text-gray-600 mb-4">Gerencie o menu do seu restaurante</p>
@@ -135,17 +162,61 @@ export default function RestaurantDashboard() {
             Gerir Menu →
           </Link>
         </div>
-        
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-2">Horários</h2>
-          <p className="text-gray-600 mb-4">Defina horários de funcionamento</p>
+          <h2 className="text-xl font-semibold mb-2">Reservas</h2>
+          <p className="text-gray-600 mb-4">Gerencie as reservas do seu restaurante</p>
           <Link 
-            href="/admin/restaurant-dashboard/hours" 
+            href="/admin/restaurant-dashboard/reservations" 
             className="text-primary hover:underline"
           >
-            Definir Horários →
+            Ver Reservas →
           </Link>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <button
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-colors"
+          onClick={() => setShowPublish((v) => !v)}
+        >
+          Publicar Restaurante
+        </button>
+        {showPublish && (
+          <div className="mt-6 bg-white rounded-lg shadow-md p-6 max-w-lg mx-auto">
+            <h2 className="text-xl font-bold mb-4 text-center">O seu restaurante está quase publicado!</h2>
+            <p className="text-center mb-6 text-gray-700">O que falta:</p>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center justify-between">
+                <span>Configurações</span>
+                <span className={`font-bold ${configComplete ? 'text-green-600' : 'text-red-500'}`}>{configComplete ? '✔' : '✗'}</span>
+                {!configComplete && (
+                  <a
+                    href="/admin/restaurant-dashboard/edit"
+                    className="ml-4 text-primary underline text-sm"
+                  >
+                    Preencher Configurações
+                  </a>
+                )}
+              </li>
+              <li className="flex items-center justify-between opacity-80">
+                <span>Menu</span>
+                <span className={`font-bold ${menuComplete && configComplete ? 'text-green-600' : 'text-red-500'}`}>{menuComplete && configComplete ? '✔' : '✗'}</span>
+                {!configComplete && <span className="ml-4 text-gray-400 text-xs">Complete as configurações primeiro</span>}
+              </li>
+              <li className="flex items-center justify-between opacity-80">
+                <span>Reservas</span>
+                <span className={`font-bold ${reservasComplete && configComplete ? 'text-green-600' : 'text-red-500'}`}>{reservasComplete && configComplete ? '✔' : '✗'}</span>
+                {!configComplete && <span className="ml-4 text-gray-400 text-xs">Complete as configurações primeiro</span>}
+              </li>
+            </ul>
+            <button
+              className={`w-full py-2 px-4 rounded-lg font-semibold transition-colors ${allComplete ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+              disabled={!allComplete}
+            >
+              Publicar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ type Restaurant = {
     email: string
   }
   createdAt: string
+  published?: boolean
 }
 
 export default function RestaurantsManagement() {
@@ -200,6 +201,9 @@ export default function RestaurantsManagement() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Data de Criação
                   </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Publicado
+                  </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Ações
                   </th>
@@ -227,6 +231,19 @@ export default function RestaurantsManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(restaurant.createdAt).toLocaleDateString('pt-PT')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {restaurant.published ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded text-green-700 bg-green-100 font-semibold">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          Sim
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded text-red-700 bg-red-100 font-semibold">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          Não
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">

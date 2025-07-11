@@ -79,18 +79,35 @@ export async function PUT(
       )
     }
     
-    if (session.user?.userType !== 'admin') {
+    const restaurantId = params.id;
+    // Check if restaurant exists
+    const existingRestaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      include: {
+        owner: true,
+      },
+    });
+    if (!existingRestaurant) {
+      return NextResponse.json(
+        { message: 'Restaurante não encontrado' },
+        { status: 404 }
+      );
+    }
+    // Authorization: allow admin or owner
+    if (
+      session.user?.userType !== 'admin' &&
+      session.user?.id !== existingRestaurant.ownerId
+    ) {
       return NextResponse.json(
         { message: 'Acesso não autorizado' },
         { status: 403 }
-      )
+      );
     }
     
-    const restaurantId = params.id
-    
     // Parse request body
-    const body = await request.json()
-    const { name, description, address, ownerId } = body
+    const body = await request.json();
+    console.log('API received body:', body);
+    const { name, description, address, ownerId } = body;
     
     // Validate required fields
     if (!name) {
@@ -114,21 +131,6 @@ export async function PUT(
       )
     }
     
-    // Check if restaurant exists
-    const existingRestaurant = await prisma.restaurant.findUnique({
-      where: { id: restaurantId },
-      include: {
-        owner: true,
-      },
-    })
-    
-    if (!existingRestaurant) {
-      return NextResponse.json(
-        { message: 'Restaurante não encontrado' },
-        { status: 404 }
-      )
-    }
-    
     // Check if owner exists
     const owner = await prisma.user.findUnique({
       where: { id: ownerId },
@@ -148,7 +150,15 @@ export async function PUT(
         name,
         description,
         address,
-        ownerId,
+        owner: { connect: { id: ownerId } },
+        cuisine: body.cuisine,
+        phone: body.phone,
+        email: body.email,
+        website: body.website,
+        socialLinks: body.socialLinks,
+        imageUrl: body.imageUrl,
+        openingHours: body.openingHours,
+        notes: body.notes,
       },
       include: {
         owner: {

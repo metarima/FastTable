@@ -79,7 +79,8 @@ export async function POST(
           name: restaurantRequest.name,
           description: restaurantRequest.description,
           address: restaurantRequest.address,
-          userId: user.id
+          ownerId: user.id,
+          published: false
         }
       })
       

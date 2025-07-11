@@ -16,6 +16,13 @@ export default function RestaurantSignUp() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const validatePassword = (pwd: string) => {
+    // Minimum 8 chars, at least 1 letter or number, and 1 special char
+    return /^(?=.*[A-Za-z0-9])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(pwd)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,9 +37,9 @@ export default function RestaurantSignUp() {
       return
     }
     
-    // Validate password length
-    if (password.length < 6) {
-      setError('A password deve ter pelo menos 6 caracteres')
+    // Validate password strength
+    if (!validatePassword(password)) {
+      setError('A password deve ter pelo menos 8 caracteres, incluindo pelo menos uma letra ou número e um caractere especial.')
       return
     }
     
@@ -158,36 +165,66 @@ export default function RestaurantSignUp() {
               />
             </div>
             
-            <div>
+            <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="Mínimo 6 caracteres"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10"
+                placeholder="Mínimo 8 caracteres"
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                className="flex items-center justify-center absolute inset-y-0 right-0 h-full px-3 focus:outline-none"
+                aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
+              >
+                {showPassword ? (
+                  // Heroicons EyeSlash
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12.001C3.226 15.885 7.24 19.5 12 19.5c1.563 0 3.05-.322 4.39-.9m3.63-2.6A10.45 10.45 0 0022.066 12c-1.292-3.885-5.306-7.5-10.066-7.5-1.13 0-2.22.186-3.24.53m-2.78 3.193l13.5 13.5m-13.5-13.5l13.5 13.5" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                ) : (
+                  // Heroicons Eye
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12C3.5 7.5 7.5 4.5 12 4.5s8.5 3 9.75 7.5c-1.25 4.5-5.25 7.5-9.75 7.5s-8.5-3-9.75-7.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                )}
+              </button>
             </div>
             
-            <div>
+            <div className="relative">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirmar Password <span className="text-red-500">*</span>
               </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10"
                 placeholder="Confirme sua password"
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="flex items-center justify-center absolute inset-y-0 right-0 h-full px-3 focus:outline-none"
+                aria-label={showConfirmPassword ? 'Ocultar password' : 'Mostrar password'}
+              >
+                {showConfirmPassword ? (
+                  // Heroicons EyeSlash
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12.001C3.226 15.885 7.24 19.5 12 19.5c1.563 0 3.05-.322 4.39-.9m3.63-2.6A10.45 10.45 0 0022.066 12c-1.292-3.885-5.306-7.5-10.066-7.5-1.13 0-2.22.186-3.24.53m-2.78 3.193l13.5 13.5m-13.5-13.5l13.5 13.5" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                ) : (
+                  // Heroicons Eye
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12C3.5 7.5 7.5 4.5 12 4.5s8.5 3 9.75 7.5c-1.25 4.5-5.25 7.5-9.75 7.5s-8.5-3-9.75-7.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                )}
+              </button>
             </div>
             
             <div className="pt-4 border-t border-gray-200">

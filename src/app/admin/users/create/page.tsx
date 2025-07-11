@@ -16,6 +16,8 @@ export default function CreateUser() {
   const [userType, setUserType] = useState('customer')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   useEffect(() => {
     if (status === 'loading') return
@@ -33,6 +35,11 @@ export default function CreateUser() {
     }
   }, [session, status, router])
   
+  const validatePassword = (pwd: string) => {
+    // Minimum 8 chars, at least 1 number, 1 special char, 1 uppercase
+    return /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(pwd)
+  }
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -42,8 +49,8 @@ export default function CreateUser() {
       return
     }
     
-    if (password.length < 6) {
-      setError('A password deve ter pelo menos 6 caracteres')
+    if (!validatePassword(password)) {
+      setError('A password deve ter pelo menos 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.')
       return
     }
     
@@ -143,38 +150,68 @@ export default function CreateUser() {
               />
             </div>
             
-            <div>
+            <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password <span className="text-red-500">*</span>
               </label>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="Mínimo 6 caracteres"
-                minLength={6}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10"
+                placeholder="Mínimo 8 caracteres"
+                minLength={8}
                 required
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                className="flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2 px-3 focus:outline-none"
+                aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
+              >
+                {showPassword ? (
+                  // Eye-off SVG
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.364-2.364A9.956 9.956 0 0021.9 12c0 2.21-.715 4.25-1.936 5.936M9.88 9.88a3 3 0 104.24 4.24" /></svg>
+                ) : (
+                  // Eye SVG
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm7.364 0a9.956 9.956 0 01-1.636 5.364M4.636 6.636A9.956 9.956 0 002.1 12c0 2.21.715 4.25 1.936 5.936M9.88 9.88a3 3 0 104.24 4.24" /></svg>
+                )}
+              </button>
             </div>
             
-            <div>
+            <div className="relative">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirmar Password <span className="text-red-500">*</span>
               </label>
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10"
                 placeholder="Confirme a password"
-                minLength={6}
+                minLength={8}
                 required
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2 px-3 focus:outline-none"
+                aria-label={showConfirmPassword ? 'Ocultar password' : 'Mostrar password'}
+              >
+                {showConfirmPassword ? (
+                  // Eye-off SVG
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.364-2.364A9.956 9.956 0 0021.9 12c0 2.21-.715 4.25-1.936 5.936M9.88 9.88a3 3 0 104.24 4.24" /></svg>
+                ) : (
+                  // Eye SVG
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm7.364 0a9.956 9.956 0 01-1.636 5.364M4.636 6.636A9.956 9.956 0 002.1 12c0 2.21.715 4.25 1.936 5.936M9.88 9.88a3 3 0 104.24 4.24" /></svg>
+                )}
+              </button>
             </div>
             
             <div>

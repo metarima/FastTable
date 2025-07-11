@@ -57,11 +57,15 @@ model Restaurant {
   email         String?
   cuisine       String?
   imageUrl      String?
+  website       String?      // Added for restaurant website
+  socialLinks   Json?        // Added for social links (array or object)
+  openingHours  Json?
+  notes         String?      // Added for special notes
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  openingHours  Json?
   ownerId       String   @unique
   owner         User     @relation(fields: [ownerId], references: [id])
+  published     Boolean  @default(false)
 }
 
 // RestaurantRequest model for pending restaurant registrations

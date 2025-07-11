@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     })
     
     // Get total restaurants count
-    const totalRestaurants = await prisma.restaurant.count()
+    const totalRestaurants = await prisma.restaurant.count({ where: { published: true } })
     
     // Get recent users (last 5)
     const recentUsers = await prisma.user.findMany({
@@ -53,6 +53,7 @@ export async function GET(request: Request) {
     
     // Get recent restaurants (last 5)
     const recentRestaurants = await prisma.restaurant.findMany({
+      where: { published: true },
       orderBy: {
         createdAt: 'desc',
       },
