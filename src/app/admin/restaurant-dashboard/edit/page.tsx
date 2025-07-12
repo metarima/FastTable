@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from 'next/image';
 
 const CUISINE_TYPES = [
   "Italiana", "Portuguesa", "Chinesa", "Japonesa", "Brasileira", "Indiana", "Fast Food", "Outro"
@@ -309,8 +310,32 @@ export default function EditRestaurantConfig() {
           ← Voltar
         </button>
       </div>
-      {/* Right: Opening Hours Card */}
-      <div className="flex-1 max-w-md">
+      {/* Right: Preview + Opening Hours Card */}
+      <div className="flex-1 max-w-md flex flex-col gap-8">
+        {/* --- Restaurant Card Preview --- */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+          <div className="relative h-48 w-full">
+            <Image
+              src={logoPreview || restaurant.imageUrl || '/images/restaurant-placeholder.jpg'}
+              alt={restaurant.name || 'Preview'}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-xl font-semibold">{restaurant.name || 'Nome do Restaurante'}</h3>
+            </div>
+            <p className="text-gray-600 text-sm mb-2">{restaurant.cuisine || 'Tipo de Cozinha'}</p>
+            <p className="text-gray-500 text-sm mb-4">{restaurant.address || 'Endereço'}</p>
+            <p className="text-gray-600 line-clamp-2">{restaurant.description || 'Descrição do restaurante...'}</p>
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Contacto: {restaurant.phone || 'Não disponível'}</p>
+              <p>Email: {restaurant.email || 'Não disponível'}</p>
+            </div>
+          </div>
+        </div>
+        {/* --- Opening Hours Card --- */}
         <div className="bg-white rounded-lg shadow p-6 border">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

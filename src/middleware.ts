@@ -33,12 +33,7 @@ export default async function middleware(request: NextRequestWithAuth) {
     return NextResponse.next()
   }
 
-  // Protect /create route - only restaurant owners
-  if (request.nextUrl.pathname.startsWith('/create')) {
-    if (token.userType !== 'restaurant') {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-  }
+
 
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {

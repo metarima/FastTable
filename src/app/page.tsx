@@ -24,11 +24,6 @@ export default function Home() {
               {session ? (
                 <div className="flex items-center gap-4">
                   <span className="text-gray-600">{session.user?.name}</span>
-                  {isRestaurantOwner && (
-                    <Link href="/create" className="text-gray-600 hover:text-primary">
-                      Criar Restaurante
-                    </Link>
-                  )}
                   <button
                     onClick={() => signOut()}
                     className="text-gray-600 hover:text-primary"
@@ -74,15 +69,11 @@ export default function Home() {
               <Link href="/restaurants" className="btn-primary">
                 Ver Restaurantes
               </Link>
-              {isRestaurantOwner ? (
-                <Link href="/create" className="btn-secondary">
-                  Criar o seu Restaurante
-                </Link>
-              ) : (
+              {!isRestaurantOwner ? (
                 <Link href="/restaurant/register" className="btn-secondary">
                   Tornar-se Parceiro
                 </Link>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

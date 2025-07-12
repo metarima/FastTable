@@ -137,6 +137,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         className={`fixed inset-y-0 left-0 z-30 w-64 transition duration-300 transform bg-white lg:translate-x-0 lg:static lg:inset-0 ${
           isSidebarOpen ? 'translate-x-0 ease-out' : '-translate-x-full ease-in'
         }`}
+        style={{ overflowX: 'auto', whiteSpace: 'nowrap' }} // Enable horizontal scroll
       >
         <div className="flex items-center justify-between flex-shrink-0 p-4 border-b">
           <Link href="/" className="text-xl font-semibold text-primary">
@@ -164,7 +165,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
         
         <div className="flex flex-col justify-between h-full">
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto" style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
             {filteredNavigation.map((item) => (
               <Link
                 key={item.href}

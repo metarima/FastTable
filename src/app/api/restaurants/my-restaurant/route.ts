@@ -52,3 +52,47 @@ export async function GET(req: Request) {
     await prisma.$disconnect()
   }
 } 
+
+export async function PATCH(req: Request) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Não autenticado' },
+        { status: 401 }
+      )
+    }
+    const userId = session.user.id
+    const userType = session.user.userType
+    if (userType !== 'restaurant' && userType !== 'restaurant_admin') {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 403 }
+      )
+    }
+    const body = await req.json()
+    // Support both menuThemeColor and published update
+    const data: any = {}
+    if (body.menuThemeColor) data.menuThemeColor = body.menuThemeColor
+    if (typeof body.published === 'boolean') data.published = body.published
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(
+        { error: 'Nenhum campo válido para atualizar' },
+        { status: 400 }
+      )
+    }
+    const restaurant = await prisma.restaurant.update({
+      where: { ownerId: userId },
+      data,
+    })
+    return NextResponse.json({ restaurant })
+  } catch (error) {
+    console.error('Error updating restaurant:', error)
+    return NextResponse.json(
+      { error: 'Erro ao atualizar restaurante' },
+      { status: 500 }
+    )
+  } finally {
+    await prisma.$disconnect()
+  }
+} 

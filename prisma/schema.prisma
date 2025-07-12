@@ -20,6 +20,7 @@ model User {
   accounts      Account[]
   restaurant    Restaurant?
   sessions      Session[]
+  reservations Reservation[]
 }
 
 model Account {
@@ -66,6 +67,10 @@ model Restaurant {
   ownerId       String   @unique
   owner         User     @relation(fields: [ownerId], references: [id])
   published     Boolean  @default(false)
+  menuItems     MenuItem[]
+  menuThemeColor String? // HEX color for menu theme
+  tableTypes    TableType[]
+  reservations  Reservation[]
 }
 
 // RestaurantRequest model for pending restaurant registrations
@@ -81,4 +86,60 @@ model RestaurantRequest {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   rejectionReason String?
+}
+
+model MenuItem {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  imageUrl     String?
+  tags         String[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  order        Int      @default(0)
+  category     String?
+}
+
+// --- Reservations and Tables ---
+model TableType {
+  id           String   @id @default(cuid())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  name         String    // e.g. "1-2", "3-4", "5-6", "7-14", or custom
+  minSeats     Int
+  maxSeats     Int
+  quantity     Int       // How many tables of this type
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  reservations ReservationTable[]
+}
+
+model Reservation {
+  id           String   @id @default(cuid())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       String?
+  name         String   // Name of the person who booked
+  email        String?  // Email of the person who booked
+  phone        String?  // Phone of the person who booked
+  peopleCount  Int
+  time         DateTime
+  paid         Boolean  @default(false)
+  food         Json?    // Array of menu items or null
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tables       ReservationTable[]
+}
+
+model ReservationTable {
+  id             String   @id @default(cuid())
+  reservation    Reservation @relation(fields: [reservationId], references: [id])
+  reservationId  String
+  tableType      TableType @relation(fields: [tableTypeId], references: [id])
+  tableTypeId    String
+  quantity       Int      // How many tables of this type for this reservation
 }
