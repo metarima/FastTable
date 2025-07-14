@@ -159,6 +159,7 @@ export async function PUT(
         imageUrl: body.imageUrl,
         openingHours: body.openingHours,
         notes: body.notes,
+        published: typeof body.published === 'boolean' ? body.published : existingRestaurant.published,
       },
       include: {
         owner: {

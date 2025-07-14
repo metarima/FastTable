@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../../auth/auth.config'
+import { sendMail } from '@/lib/emailer';
+import { emailTemplate } from '@/lib/emailTemplate';
 
 const prisma = new PrismaClient()
 
@@ -61,9 +63,18 @@ export async function POST(
         rejectionReason
       }
     })
-    
-    // Aqui poderia ser adicionado código para enviar um email 
-    // ao proprietário notificando a rejeição e o motivo
+
+    // Send rejection email to requester
+    if (restaurantRequest?.ownerEmail) {
+      await sendMail({
+        to: restaurantRequest.ownerEmail,
+        subject: 'Seu restaurante foi rejeitado - FastTable',
+        html: emailTemplate({
+          title: 'Restaurante rejeitado',
+          message: `Olá ${restaurantRequest.ownerName || restaurantRequest.name},<br/>Seu pedido de restaurante <b>${restaurantRequest.name}</b> foi rejeitado.<br/><b>Motivo:</b> ${rejectionReason}`
+        })
+      });
+    }
     
     return NextResponse.json({
       message: 'Solicitação rejeitada com sucesso',

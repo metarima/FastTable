@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
+import { sendMail } from '@/lib/emailer';
+import { emailTemplate } from '@/lib/emailTemplate';
 
 const prisma = new PrismaClient()
 
@@ -73,6 +75,20 @@ export async function POST(request: Request) {
         password: hashedPassword,
       },
     })
+
+    // Notify all admins
+    const admins = await prisma.user.findMany({ where: { userType: 'admin' } });
+    const adminEmails = admins.map(a => a.email).filter(Boolean);
+    if (adminEmails.length > 0) {
+      await Promise.all(adminEmails.map(email => sendMail({
+        to: email,
+        subject: 'Nova solicitação de restaurante - FastTable',
+        html: emailTemplate({
+          title: 'Nova solicitação de restaurante',
+          message: `Um novo pedido de restaurante foi enviado:<br/><br/><b>Nome:</b> ${restaurantName}<br/><b>Proprietário:</b> ${ownerName || '-'}<br/><b>Email:</b> ${ownerEmail}<br/><b>Endereço:</b> ${restaurantAddress}<br/><b>Descrição:</b> ${restaurantDescription || '-'}<br/><br/>Acesse o painel de administração para aprovar ou rejeitar.`
+        })
+      })));
+    }
     
     return NextResponse.json({
       message: 'Solicitação enviada com sucesso!',

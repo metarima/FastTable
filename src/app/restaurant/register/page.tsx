@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRef } from 'react';
 
 export default function RestaurantSignUp() {
   const router = useRouter()
@@ -18,6 +19,10 @@ export default function RestaurantSignUp() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const addressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const validatePassword = (pwd: string) => {
     // Minimum 8 chars, at least 1 letter or number, and 1 special char
@@ -83,6 +88,37 @@ export default function RestaurantSignUp() {
       setLoading(false)
     }
   }
+
+  // Address autocomplete handler
+  const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setAddressQuery(value);
+    setRestaurantAddress(value);
+    if (addressTimeout.current) clearTimeout(addressTimeout.current);
+    if (value.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    setAddressLoading(true);
+    addressTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&addressdetails=1&limit=5`
+        );
+        const data = await res.json();
+        setAddressSuggestions(data);
+      } catch {
+        setAddressSuggestions([]);
+      } finally {
+        setAddressLoading(false);
+      }
+    }, 400);
+  };
+  const handleAddressSelect = (suggestion: any) => {
+    setAddressQuery(suggestion.display_name);
+    setRestaurantAddress(suggestion.display_name);
+    setAddressSuggestions([]);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -266,16 +302,35 @@ export default function RestaurantSignUp() {
               <label htmlFor="restaurantAddress" className="block text-sm font-medium text-gray-700">
                 Endereço <span className="text-red-500">*</span>
               </label>
-              <input
-                id="restaurantAddress"
-                name="restaurantAddress"
-                type="text"
-                required
-                value={restaurantAddress}
-                onChange={(e) => setRestaurantAddress(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="Endereço completo do restaurante"
-              />
+              <div className="relative">
+                <input
+                  id="restaurantAddress"
+                  name="restaurantAddress"
+                  type="text"
+                  required
+                  value={addressQuery}
+                  onChange={handleAddressInput}
+                  autoComplete="off"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                  placeholder="Endereço completo do restaurante"
+                />
+                {addressLoading && (
+                  <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-b shadow z-10 p-2 text-gray-500 text-sm">A procurar endereços...</div>
+                )}
+                {addressSuggestions.length > 0 && (
+                  <ul className="absolute left-0 right-0 bg-white border border-gray-200 rounded-b shadow z-10 max-h-48 overflow-y-auto">
+                    {addressSuggestions.map((s, i) => (
+                      <li
+                        key={s.place_id}
+                        className="px-3 py-2 cursor-pointer hover:bg-primary/10 text-sm"
+                        onClick={() => handleAddressSelect(s)}
+                      >
+                        {s.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
           

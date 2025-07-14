@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image';
 
 export default function SignIn() {
   const router = useRouter()
@@ -71,6 +72,9 @@ export default function SignIn() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          <div className="flex justify-center mb-4">
+            <Image src="/images/FastTable.png" alt="FastTable Logo" width={96} height={96} className="w-24 h-24 object-contain" />
+          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Iniciar Sessão
           </h2>

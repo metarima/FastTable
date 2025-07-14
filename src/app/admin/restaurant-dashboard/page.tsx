@@ -278,7 +278,7 @@ export default function RestaurantDashboard() {
           <p className="text-gray-600 mb-4">Gerencie o menu do seu restaurante</p>
           <Link 
             href="/admin/restaurant-dashboard/menu" 
-            className="bg-gradient-to-r from-green-400 to-blue-500 text-white py-2 px-4 rounded-md mt-2 block text-center font-semibold shadow hover:from-green-500 hover:to-blue-600 transition-colors"
+            className="bg-gradient-to-r from-blue-500 to-blue-500 text-white py-2 px-4 rounded-md mt-2 block text-center font-semibold shadow hover:from-green-500 hover:to-blue-600 transition-colors"
           >
             Gerir Menu Personalizado
           </Link>

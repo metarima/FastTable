@@ -15,6 +15,7 @@ export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [success, setSuccess] = useState('')
 
   const validatePassword = (pwd: string) => {
     // Minimum 8 chars, at least 1 letter or number, and 1 special char
@@ -57,19 +58,10 @@ export default function SignUp() {
         throw new Error(data.error || 'Erro ao criar conta')
       }
 
-      // Sign in the user after successful registration
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        throw new Error(result.error)
-      }
-
-      // Redirect to homepage after signup
-      router.push('/')
+      // Show success message and disable form
+      setSuccess('Conta criada! Por favor, verifique o seu email antes de iniciar sessão.')
+      setIsLoading(false)
+      return
     } catch (error) {
       console.error('Registration error:', error)
       setError(error instanceof Error ? error.message : 'Erro ao criar conta')
@@ -105,7 +97,11 @@ export default function SignUp() {
               {error}
             </div>
           )}
-
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              {success}
+            </div>
+          )}
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="name" className="sr-only">
@@ -120,7 +116,7 @@ export default function SignUp() {
                 onChange={(e) => setName(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder="Nome completo"
-                disabled={isLoading}
+                disabled={isLoading || !!success}
               />
             </div>
 
@@ -138,7 +134,7 @@ export default function SignUp() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder="Endereço de email"
-                disabled={isLoading}
+                disabled={isLoading || !!success}
               />
             </div>
 
@@ -155,7 +151,7 @@ export default function SignUp() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10"
                 placeholder="Palavra-passe"
-                disabled={isLoading}
+                disabled={isLoading || !!success}
               />
               <button
                 type="button"
@@ -187,7 +183,7 @@ export default function SignUp() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10"
                 placeholder="Confirmar palavra-passe"
-                disabled={isLoading}
+                disabled={isLoading || !!success}
               />
               <button
                 type="button"
@@ -211,7 +207,7 @@ export default function SignUp() {
             <button
               type="submit"
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
+              disabled={isLoading || !!success}
             >
               {isLoading ? 'A criar conta...' : 'Criar Conta'}
             </button>

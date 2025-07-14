@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../../auth/auth.config'
 import bcrypt from 'bcrypt'
+import { sendMail } from '@/lib/emailer';
+import { emailTemplate } from '@/lib/emailTemplate';
 
 const prisma = new PrismaClient()
 
@@ -94,8 +96,20 @@ export async function POST(
         }
       })
       
-      return { restaurant, updatedRequest }
+      return { restaurant, updatedRequest, user };
     })
+
+    // Send approval email to requester
+    if (restaurantRequest?.ownerEmail) {
+      await sendMail({
+        to: restaurantRequest.ownerEmail,
+        subject: 'Seu restaurante foi aprovado! - FastTable',
+        html: emailTemplate({
+          title: 'Restaurante aprovado',
+          message: `Olá ${restaurantRequest.ownerName || restaurantRequest.name},<br/>Seu pedido de restaurante <b>${restaurantRequest.name}</b> foi aprovado!<br/>Você já pode acessar o sistema com seu email e senha cadastrados.`
+        })
+      });
+    }
     
     return NextResponse.json({
       message: 'Solicitação aprovada com sucesso',

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from 'next/image';
+import { useRef } from "react";
 
 const CUISINE_TYPES = [
   "Italiana", "Portuguesa", "Chinesa", "Japonesa", "Brasileira", "Indiana", "Fast Food", "Outro"
@@ -20,6 +21,10 @@ export default function EditRestaurantConfig() {
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [openingHours, setOpeningHours] = useState<any[]>([]);
+  const [addressQuery, setAddressQuery] = useState(restaurant?.address || "");
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const addressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -64,6 +69,37 @@ export default function EditRestaurantConfig() {
     const updated = [...openingHours];
     updated[idx] = { ...updated[idx], [field]: value };
     setOpeningHours(updated);
+  };
+
+  // Address autocomplete handler
+  const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setAddressQuery(value);
+    setRestaurant({ ...restaurant, address: value });
+    if (addressTimeout.current) clearTimeout(addressTimeout.current);
+    if (value.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    setAddressLoading(true);
+    addressTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&addressdetails=1&limit=5`
+        );
+        const data = await res.json();
+        setAddressSuggestions(data);
+      } catch {
+        setAddressSuggestions([]);
+      } finally {
+        setAddressLoading(false);
+      }
+    }, 400);
+  };
+  const handleAddressSelect = (suggestion: any) => {
+    setAddressQuery(suggestion.display_name);
+    setRestaurant({ ...restaurant, address: suggestion.display_name });
+    setAddressSuggestions([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,16 +194,33 @@ export default function EditRestaurantConfig() {
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">Endereço *</label>
             <input
               type="text"
               name="address"
-              value={restaurant.address || ""}
-              onChange={handleChange}
+              value={addressQuery}
+              onChange={handleAddressInput}
               required
+              autoComplete="off"
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             />
+            {addressLoading && (
+              <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-b shadow z-10 p-2 text-gray-500 text-sm">A procurar endereços...</div>
+            )}
+            {addressSuggestions.length > 0 && (
+              <ul className="absolute left-0 right-0 bg-white border border-gray-200 rounded-b shadow z-10 max-h-48 overflow-y-auto">
+                {addressSuggestions.map((s, i) => (
+                  <li
+                    key={s.place_id}
+                    className="px-3 py-2 cursor-pointer hover:bg-primary/10 text-sm"
+                    onClick={() => handleAddressSelect(s)}
+                  >
+                    {s.display_name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cozinha *</label>
@@ -261,28 +314,6 @@ export default function EditRestaurantConfig() {
             )}
           </div>
           {/* Reservation Settings */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tamanho mínimo da reserva</label>
-            <input
-              type="number"
-              name="minReservationSize"
-              value={restaurant.minReservationSize || ""}
-              onChange={handleChange}
-              min={1}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tamanho máximo da reserva</label>
-            <input
-              type="number"
-              name="maxReservationSize"
-              value={restaurant.maxReservationSize || ""}
-              onChange={handleChange}
-              min={1}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-            />
-          </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Notas Especiais</label>
             <textarea

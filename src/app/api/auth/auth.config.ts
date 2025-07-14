@@ -45,6 +45,11 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Block login if email is not verified
+        if (!user.emailVerified) {
+          throw new Error('Por favor, verifique o seu email antes de iniciar sessão.')
+        }
+
         return user
       }
     })

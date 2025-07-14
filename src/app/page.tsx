@@ -21,12 +21,28 @@ export default function Home() {
               <Link href="/restaurants" className="text-gray-600 hover:text-primary">
                 Restaurantes
               </Link>
+              {session && isRestaurantOwner && (
+                <Link href="/admin/restaurant-dashboard" className="text-gray-600 hover:text-primary font-semibold">
+                  O seu restaurante
+                </Link>
+              )}
               {session ? (
-                <div className="flex items-center gap-4">
-                  <span className="text-gray-600">{session.user?.name}</span>
+                <div className="flex items-center gap-2">
+                  <Link href="/profile" className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-bold text-base">
+                      {session.user?.image ? (
+                        <Image src={session.user.image} alt="Profile" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        session.user?.name ? session.user.name.charAt(0).toUpperCase() : (
+                          <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z' /></svg>
+                        )
+                      )}
+                    </span>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-semibold hover:underline transition">{session.user?.name}</span>
+                  </Link>
                   <button
                     onClick={() => signOut()}
-                    className="text-gray-600 hover:text-primary"
+                    className="text-gray-600 hover:text-primary ml-2"
                   >
                     Sign Out
                   </button>
@@ -127,7 +143,7 @@ export default function Home() {
               Criar Restaurante
             </Link>
           ) : (
-            <Link href="/auth/signup?type=restaurant" className="btn-primary">
+            <Link href="/restaurant/register" className="btn-primary">
               Começar agora!
             </Link>
           )}

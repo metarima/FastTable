@@ -54,6 +54,7 @@ export default function CreateRestaurant() {
       sunday: { open: '', close: '' },
     }
   })
+  const [phoneError, setPhoneError] = useState('');
 
   useEffect(() => {
     if (status === 'loading') return
@@ -66,11 +67,22 @@ export default function CreateRestaurant() {
   }, [session, status, router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      // Only allow digits and limit to 9
+      const digits = value.replace(/\D/g, '').slice(0, 9);
+      setFormData(prev => ({ ...prev, phone: digits }));
+      if (digits.length > 0 && digits.length < 9) {
+        setPhoneError('O número deve ter 9 dígitos.');
+      } else {
+        setPhoneError('');
+      }
+      return;
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }))
+    }));
   }
 
   const handleOpeningHoursChange = (day: string, type: 'open' | 'close', value: string) => {
@@ -87,9 +99,15 @@ export default function CreateRestaurant() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    // Phone validation: must be exactly 9 digits
+    if (!/^\d{9}$/.test(formData.phone)) {
+      setError('O número de telefone deve ter exatamente 9 dígitos.');
+      setIsLoading(false);
+      return;
+    }
 
     if (!session?.user) {
       setError('Por favor, faça login para criar um restaurante')
@@ -242,11 +260,18 @@ export default function CreateRestaurant() {
             name="phone"
             type="tel"
             value={formData.phone}
+            maxLength={9}
             onChange={handleInputChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             disabled={isLoading}
-            placeholder="Ex: +351 123 456 789"
+            placeholder="Ex: 912345678"
+            pattern="\\d{9}"
+            inputMode="numeric"
           />
+          {/* Immediate feedback for phone number length */}
+          {formData.phone.length > 0 && formData.phone.length < 9 && (
+            <span style={{ color: 'red', fontSize: '0.9em' }}>O número deve ter 9 dígitos.</span>
+          )}
         </div>
       </div>
 

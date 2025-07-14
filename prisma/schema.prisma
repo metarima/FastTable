@@ -71,6 +71,7 @@ model Restaurant {
   menuThemeColor String? // HEX color for menu theme
   tableTypes    TableType[]
   reservations  Reservation[]
+  reservationDuration Int @default(2) // Duration in hours for each reservation
 }
 
 // RestaurantRequest model for pending restaurant registrations
@@ -137,9 +138,17 @@ model Reservation {
 
 model ReservationTable {
   id             String   @id @default(cuid())
-  reservation    Reservation @relation(fields: [reservationId], references: [id])
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   reservationId  String
   tableType      TableType @relation(fields: [tableTypeId], references: [id])
   tableTypeId    String
   quantity       Int      // How many tables of this type for this reservation
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

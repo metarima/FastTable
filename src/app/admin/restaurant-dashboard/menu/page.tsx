@@ -236,7 +236,7 @@ export default function MenuEditor() {
               )}
               <button
                 type="submit"
-                className="w-full py-2 rounded bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold shadow hover:from-green-500 hover:to-blue-600 transition-colors"
+                className="w-full py-2 rounded bg-gradient-to-r from-blue-500 to-blue-500 text-white font-semibold shadow hover:from-green-500 hover:to-blue-600 transition-colors"
               >
                 Adicionar Prato
               </button>
@@ -253,7 +253,7 @@ export default function MenuEditor() {
                 <div className="mt-2"><SketchPicker color={themeColor} onChange={handleColorChange} /></div>
               )}
               <button
-                className="mt-4 w-full py-2 rounded bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold shadow hover:from-green-600 hover:to-blue-600 transition-colors disabled:opacity-60"
+                className="mt-4 w-full py-2 rounded bg-gradient-to-r from-blue-500 to-blue-500 text-white font-bold shadow hover:from-green-600 hover:to-blue-600 transition-colors disabled:opacity-60"
                 onClick={handleSaveMenu}
                 disabled={saveLoading}
                 type="button"

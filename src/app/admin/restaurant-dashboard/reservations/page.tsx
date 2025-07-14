@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import pt from "date-fns/locale/pt";
+import { pt } from "date-fns/locale/pt";
 
 interface Reservation {
   id: string;
@@ -11,8 +11,10 @@ interface Reservation {
   peopleCount: number;
   time: string;
   paid: boolean;
+  email?: string;
+  phone?: string;
   food: any[];
-  tables: { tableType: { name: string; minSeats: number; maxSeats: number }; quantity: number }[];
+  tables: { tableType: { id: string; name: string; minSeats: number; maxSeats: number }; quantity: number }[];
 }
 
 interface TableType {
@@ -36,6 +38,10 @@ export default function ReservationsPage() {
     return now.toISOString().slice(0, 16);
   });
   const [availableTables, setAvailableTables] = useState<{[id: string]: number}>({});
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Table setup modal state
   const [tableInputs, setTableInputs] = useState([
@@ -47,6 +53,9 @@ export default function ReservationsPage() {
   const [savingTables, setSavingTables] = useState(false);
   const [tableError, setTableError] = useState("");
 
+  // Add state for reservation duration (in hours)
+  const [reservationDuration, setReservationDuration] = useState(2);
+
   // Calculate available tables for the selected time
   useEffect(() => {
     if (!tableTypes.length) return;
@@ -54,13 +63,15 @@ export default function ReservationsPage() {
     if (tableViewMode === 'time') {
       timeToCheck = new Date(selectedTime);
     }
-    // Find reservations that overlap with the selected time (simple: same hour)
+    const durationMs = reservationDuration * 60 * 60 * 1000;
+    const halfDurationMs = durationMs / 2;
+    const selectedStart = new Date(timeToCheck.getTime() - halfDurationMs);
+    const selectedEnd = new Date(timeToCheck.getTime() + halfDurationMs);
     const reservationsAtTime = reservations.filter(r => {
       const resTime = new Date(r.time);
-      return resTime.getFullYear() === timeToCheck.getFullYear() &&
-        resTime.getMonth() === timeToCheck.getMonth() &&
-        resTime.getDate() === timeToCheck.getDate() &&
-        resTime.getHours() === timeToCheck.getHours();
+      const resStart = new Date(resTime.getTime() - halfDurationMs);
+      const resEnd = new Date(resTime.getTime() + halfDurationMs);
+      return resEnd > selectedStart && resStart < selectedEnd;
     });
     const used: {[id: string]: number} = {};
     for (const r of reservationsAtTime) {
@@ -73,17 +84,21 @@ export default function ReservationsPage() {
       avail[t.id] = Math.max(0, t.quantity - (used[t.id] || 0));
     }
     setAvailableTables(avail);
-  }, [tableTypes, reservations, tableViewMode, selectedTime]);
+  }, [tableTypes, reservations, tableViewMode, selectedTime, reservationDuration]);
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
       fetch("/api/restaurants/my-restaurant/reservations").then((res) => res.json()),
       fetch("/api/restaurants/my-restaurant/tables").then((res) => res.json()),
+      fetch("/api/restaurants/my-restaurant").then((res) => res.json()),
     ])
-      .then(([reservationsData, tablesData]) => {
+      .then(([reservationsData, tablesData, restaurantData]) => {
         setReservations(reservationsData.reservations || []);
         setTableTypes(tablesData.tableTypes || []);
+        if (restaurantData.restaurant?.reservationDuration) {
+          setReservationDuration(restaurantData.restaurant.reservationDuration);
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -99,7 +114,7 @@ export default function ReservationsPage() {
     }
   }, [tableTypes]);
 
-  const handleTableInputChange = (idx, field, value) => {
+  const handleTableInputChange = (idx: number, field: string, value: any) => {
     setTableInputs(inputs => inputs.map((t, i) => i === idx ? { ...t, [field]: value } : t));
   };
 
@@ -113,7 +128,7 @@ export default function ReservationsPage() {
     setTableError("");
   };
 
-  const handleRemoveTable = (idx) => {
+  const handleRemoveTable = (idx: number) => {
     setTableInputs(inputs => inputs.filter((_, i) => i !== idx));
   };
 
@@ -124,16 +139,61 @@ export default function ReservationsPage() {
       const res = await fetch("/api/restaurants/my-restaurant/tables", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tableTypes: tableInputs }),
+        body: JSON.stringify({ tableTypes: tableInputs, reservationDuration }),
       });
       if (!res.ok) throw new Error("Erro ao guardar mesas");
       setShowTableModal(false);
       // Optionally, refresh tableTypes from backend
       window.location.reload();
-    } catch (e) {
+    } catch (e: any) {
       setTableError(e.message || "Erro ao guardar mesas");
     } finally {
       setSavingTables(false);
+    }
+  };
+
+  const handleViewDetails = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setShowDetailsModal(true);
+  };
+
+  const handleDeleteClick = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setShowDeleteModal(true);
+  };
+
+  const refreshReservations = async () => {
+    try {
+      const response = await fetch("/api/restaurants/my-restaurant/reservations");
+      const data = await response.json();
+      setReservations(data.reservations || []);
+    } catch (error) {
+      console.error('Error refreshing reservations:', error);
+    }
+  };
+
+  const handleDeleteReservation = async () => {
+    if (!selectedReservation) return;
+    setDeletingId(selectedReservation.id);
+    try {
+      const response = await fetch(`/api/restaurants/my-restaurant/reservations/${selectedReservation.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete reservation');
+      }
+      
+      // Refresh the reservations from the server to ensure we have the latest data
+      await refreshReservations();
+      setShowDeleteModal(false);
+      setSelectedReservation(null);
+    } catch (error: any) {
+      console.error('Error deleting reservation:', error);
+      alert(`Erro ao eliminar reserva: ${error.message}`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -186,6 +246,7 @@ export default function ReservationsPage() {
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mesas</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hora</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -222,10 +283,92 @@ export default function ReservationsPage() {
                         <span className="text-red-500 font-bold">Não</span>
                       )}
                     </td>
+                    <td className="px-4 py-2 flex gap-2">
+                      <button
+                        className="px-2 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200"
+                        onClick={() => handleViewDetails(r)}
+                      >Ver Detalhes</button>
+                      <button
+                        className="text-red-600 hover:text-red-900 p-1"
+                        onClick={() => handleDeleteClick(r)}
+                        disabled={deletingId === r.id}
+                        title="Eliminar reserva"
+                      >
+                        {deletingId === r.id ? (
+                          <span className="text-sm">A eliminar...</span>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {/* Details Modal */}
+        {showDetailsModal && selectedReservation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full relative animate-fade-in">
+              <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setShowDetailsModal(false)} aria-label="Fechar">×</button>
+              <h3 className="text-2xl font-bold mb-4 text-primary">Detalhes da Reserva</h3>
+              <div className="space-y-2 text-gray-700 text-lg">
+                <div><span className="font-semibold">Nome:</span> {selectedReservation.name}</div>
+                {selectedReservation.email && <div><span className="font-semibold">Email:</span> {selectedReservation.email}</div>}
+                {selectedReservation.phone && <div><span className="font-semibold">Telefone:</span> {selectedReservation.phone}</div>}
+                <div><span className="font-semibold">Data:</span> {format(new Date(selectedReservation.time), 'dd/MM/yyyy', { locale: pt })}</div>
+                <div><span className="font-semibold">Hora:</span> {format(new Date(selectedReservation.time), 'HH:mm', { locale: pt })}</div>
+                <div><span className="font-semibold">Nº de pessoas:</span> {selectedReservation.peopleCount}</div>
+                {Array.isArray(selectedReservation.food) && selectedReservation.food.length > 0 && (
+                  <div>
+                    <span className="font-semibold">Pratos:</span>
+                    <ul className="list-disc ml-6 mt-1 text-base">
+                      {selectedReservation.food.map((f: any, i: number) => (
+                        <li key={i}>{f.name} x{f.quantity}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {selectedReservation.tables && selectedReservation.tables.length > 0 && (
+                  <div>
+                    <span className="font-semibold">Mesas:</span>
+                    <ul className="list-disc ml-6 mt-1 text-base">
+                      {selectedReservation.tables.map((t, i) => (
+                        <li key={i}>{t.tableType.name} ({t.tableType.minSeats}-{t.tableType.maxSeats}) x{t.quantity}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div><span className="font-semibold">Pago:</span> {selectedReservation.paid ? 'Sim' : 'Não'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && selectedReservation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full relative animate-fade-in">
+              <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setShowDeleteModal(false)} aria-label="Fechar">×</button>
+              <h3 className="text-xl font-bold mb-4 text-red-600">Eliminar Reserva</h3>
+              <div className="mb-4">Tem a certeza que deseja eliminar esta reserva?</div>
+              <div className="flex gap-2 mt-6">
+                <button
+                  className="flex-1 py-2 rounded font-bold text-white bg-red-600 hover:bg-red-700"
+                  onClick={handleDeleteReservation}
+                  disabled={deletingId === selectedReservation.id}
+                >
+                  {deletingId === selectedReservation.id ? 'A eliminar...' : 'Eliminar'}
+                </button>
+                <button
+                  className="flex-1 py-2 rounded font-bold border border-gray-300 text-gray-700 bg-gray-100 hover:bg-gray-200"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deletingId === selectedReservation.id}
+                >Cancelar</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -306,6 +449,17 @@ export default function ReservationsPage() {
                   <button className="text-red-500 hover:text-red-700 ml-2" onClick={() => handleRemoveTable(idx)} title="Remover mesa">×</button>
                 </div>
               ))}
+            </div>
+            <div className="mb-4">
+              <label className="block text-xs font-medium mb-1">Duração da reserva (horas)</label>
+              <input
+                type="number"
+                min={1}
+                max={6}
+                className="border rounded px-2 py-1 w-20"
+                value={reservationDuration}
+                onChange={e => setReservationDuration(Number(e.target.value))}
+              />
             </div>
             <div className="border-t pt-4 mt-4">
               <div className="font-semibold mb-2">Adicionar mesa personalizada</div>
