@@ -4,6 +4,19 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -13,6 +26,7 @@ export default function AdminDashboard() {
     totalRestaurants: 0
   })
   const [loading, setLoading] = useState(true)
+  const [growth, setGrowth] = useState({ userGrowth: [], restaurantGrowth: [] });
 
   useEffect(() => {
     if (status === 'loading') return
@@ -36,6 +50,10 @@ export default function AdminDashboard() {
         if (response.ok) {
           const data = await response.json()
           setStats(data)
+          setGrowth({
+            userGrowth: data.userGrowth || [],
+            restaurantGrowth: data.restaurantGrowth || [],
+          });
         }
       } catch (error) {
         console.error('Error fetching stats:', error)
@@ -92,6 +110,66 @@ export default function AdminDashboard() {
           >
             Adicionar Restaurante
           </Link>
+        </div>
+      </div>
+
+      {/* Growth Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold mb-4">Crescimento de Utilizadores (7 dias)</h2>
+          <Line
+            data={{
+              labels: growth.userGrowth.map((d: any) => d.date),
+              datasets: [
+                {
+                  label: 'Novos Utilizadores',
+                  data: growth.userGrowth.map((d: any) => d.count),
+                  borderColor: '#2563eb',
+                  backgroundColor: 'rgba(37,99,235,0.1)',
+                  tension: 0.3,
+                  fill: true,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                title: { display: false },
+              },
+              scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+              },
+            }}
+          />
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold mb-4">Crescimento de Restaurantes (7 dias)</h2>
+          <Line
+            data={{
+              labels: growth.restaurantGrowth.map((d: any) => d.date),
+              datasets: [
+                {
+                  label: 'Novos Restaurantes',
+                  data: growth.restaurantGrowth.map((d: any) => d.count),
+                  borderColor: '#22c55e',
+                  backgroundColor: 'rgba(34,197,94,0.1)',
+                  tension: 0.3,
+                  fill: true,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                title: { display: false },
+              },
+              scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+              },
+            }}
+          />
         </div>
       </div>
     </div>

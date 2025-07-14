@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendMail } from '@/lib/emailer';
+import { emailTemplate } from '@/lib/emailTemplate';
 
 export async function GET(req, { params }) {
   const { id: restaurantId } = params;
@@ -123,5 +125,24 @@ export async function POST(req, { params }) {
       tables: { include: { tableType: true } },
     },
   });
+
+  // Send confirmation email if email is provided
+  if (email) {
+    // Format reservation details
+    const dateStr = reqTime.toLocaleDateString('pt-PT');
+    const timeStr = reqTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+    let foodDetails = '';
+    if (Array.isArray(food) && food.length > 0) {
+      foodDetails = '<ul style="margin:8px 0 0 16px;padding:0;">' + food.map((f: any) => `<li>${f.name} x${f.quantity} - €${(f.price * f.quantity).toFixed(2)}</li>`).join('') + '</ul>';
+    }
+    await sendMail({
+      to: email,
+      subject: 'Confirmação de Reserva - FastTable',
+      html: emailTemplate({
+        title: 'Obrigado por fazer uma reserva!',
+        message: `Olá ${name},<br/>Sua reserva foi recebida com sucesso no restaurante <b>${restaurant.name}</b>.<br/><br/><b>Data:</b> ${dateStr}<br/><b>Hora:</b> ${timeStr}<br/><b>Nº de pessoas:</b> ${peopleCount}<br/>${foodDetails ? '<b>Menu escolhido:</b>' + foodDetails : ''}<br/>Se precisar alterar ou cancelar, por favor contacte o restaurante.`
+      }),
+    });
+  }
   return NextResponse.json({ reservation });
 } 

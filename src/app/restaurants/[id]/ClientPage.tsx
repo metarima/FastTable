@@ -358,12 +358,12 @@ function ReservationForm({ restaurantId, menuColor, onReservationComplete }: { r
                 setPhone(digits);
               }}
               required
-              pattern="\\d{9}"
+              pattern="[0-9]{9}"
               inputMode="numeric"
               placeholder="Telefone"
             />
             {/* Immediate feedback for phone number length */}
-            {phone.length > 0 && phone.length < 9 && (
+            {phone.length > 0 && phone.length <= 9 && (
               <span style={{ color: 'red', fontSize: '0.9em' }}>O número deve ter 9 dígitos.</span>
             )}
           </div>

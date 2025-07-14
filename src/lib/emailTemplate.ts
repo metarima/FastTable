@@ -12,7 +12,7 @@ export function emailTemplate({ title, message, action }: {
     <table style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px #0001;overflow:hidden;">
       <tr>
         <td style="background:#3b82f6;padding:24px 0;text-align:center;">
-          <img src='https://fasttable.app/images/FastTable.png' alt='FastTable' style='width:64px;height:64px;border-radius:12px;box-shadow:0 2px 8px #0002;background:#fff;padding:8px;'/>
+          <img src='https://i.imgur.com/mPFuxyd.png' alt='FastTable' style='width:64px;height:64px;border-radius:12px;box-shadow:0 2px 8px #0002;background:#fff;padding:8px;'/>
           <h1 style="color:#fff;font-size:2rem;margin:16px 0 0 0;font-weight:800;letter-spacing:1px;">FastTable</h1>
         </td>
       </tr>
