@@ -128,6 +128,7 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         userType,
+        emailVerified: new Date(),
       },
     })
     

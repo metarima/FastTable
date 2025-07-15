@@ -35,6 +35,13 @@ export default async function middleware(request: NextRequestWithAuth) {
 
 
 
+  // Protect profile routes - only for customers
+  if (request.nextUrl.pathname.startsWith('/profile')) {
+    if (token.userType !== 'customer') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     // Dashboard is a router, so allow it to handle the redirects
@@ -63,5 +70,5 @@ export default async function middleware(request: NextRequestWithAuth) {
 }
 
 export const config = {
-  matcher: ['/', '/create/:path*', '/admin/:path*']
+  matcher: ['/', '/create/:path*', '/admin/:path*', '/profile/:path*']
 } 

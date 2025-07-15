@@ -1,5 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
+import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 
@@ -19,7 +21,12 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -55,15 +62,28 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // No manual user update/creation needed for OAuth providers
+      return true;
+    },
     async jwt({ token, user, account }) {
       if (account && user) {
+        // Patch emailVerified for Google users if not set
+        if (account.provider === 'google' && !user.emailVerified) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerified: new Date() }
+          });
+          token.emailVerified = new Date();
+        }
         return {
           ...token,
           id: user.id,
-          userType: user.userType
+          userType: user.userType,
+          emailVerified: user.emailVerified || new Date()
         }
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       return {

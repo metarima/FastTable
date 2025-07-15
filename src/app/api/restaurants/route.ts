@@ -5,8 +5,36 @@ import { authOptions } from '@/app/api/auth/auth.config'
 
 const prisma = new PrismaClient()
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const url = new URL(req.url, 'http://localhost');
+    const top = url.searchParams.get('top');
+    if (top) {
+      // Return top N restaurants by reservation count
+      const topN = parseInt(top, 10) || 3;
+      // Get published restaurants with reservation counts
+      const restaurants = await prisma.restaurant.findMany({
+        where: { published: true },
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+          cuisine: true,
+          reservations: {
+            select: { id: true },
+          },
+        },
+      });
+      // Sort by reservation count
+      const sorted = restaurants
+        .map(r => ({
+          ...r,
+          reservationCount: r.reservations.length,
+        }))
+        .sort((a, b) => b.reservationCount - a.reservationCount)
+        .slice(0, topN);
+      return NextResponse.json(sorted);
+    }
     const restaurants = await prisma.restaurant.findMany({
       where: { published: true },
       include: {

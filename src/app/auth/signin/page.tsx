@@ -195,7 +195,7 @@ export default function SignIn() {
 
           <div className="mt-6">
             <button
-              onClick={() => signIn('google')}
+              onClick={() => signIn('google', { callbackUrl: '/' })}
               disabled={isLoading}
               className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
             >

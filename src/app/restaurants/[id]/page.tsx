@@ -20,10 +20,19 @@ async function getMenuItems(restaurantId: string) {
   return data.menu || [];
 }
 
+async function getRestaurantStats(restaurantId: string) {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const res = await fetch(`${base}/api/restaurants/${restaurantId}/stats`, { cache: 'no-store' });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data || null;
+}
+
 export default async function RestaurantPage({ params }: { params: { id: string } }) {
   const restaurant = await getRestaurant(params.id);
   if (!restaurant) return notFound();
   const menuItems = await getMenuItems(restaurant.id);
+  const stats = await getRestaurantStats(restaurant.id);
   const menuColor = restaurant.menuThemeColor || '#2563eb';
 
   // Group menu items by category
@@ -34,5 +43,5 @@ export default async function RestaurantPage({ params }: { params: { id: string 
     menuByCategory[cat].push(item);
   }
 
-  return <RestaurantClientPage restaurant={restaurant} menuByCategory={menuByCategory} menuColor={menuColor} />;
+  return <RestaurantClientPage restaurant={restaurant} menuByCategory={menuByCategory} menuColor={menuColor} stats={stats} />;
 } 

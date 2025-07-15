@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   if (!restaurant) {
     return NextResponse.json({ error: 'No restaurant found' }, { status: 404 });
   }
-  // 1. People currently booked for today
+  // 1. Number of reservations for today
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date();
@@ -23,9 +23,9 @@ export async function GET(req: Request) {
       restaurantId: restaurant.id,
       time: { gte: startOfDay, lte: endOfDay },
     },
-    select: { peopleCount: true, food: true },
+    select: { id: true, food: true },
   });
-  const currentlyBookedPeople = todayReservations.reduce((sum, r) => sum + (r.peopleCount || 0), 0);
+  const reservationsToday = todayReservations.length;
 
   // 2. Menu item count
   const menuItemCount = await prisma.menuItem.count({ where: { restaurantId: restaurant.id } });
@@ -35,8 +35,9 @@ export async function GET(req: Request) {
   for (const r of todayReservations) {
     if (Array.isArray(r.food)) {
       for (const item of r.food) {
-        if (item && item.menuItemId) {
-          menuItemCounts[item.menuItemId] = (menuItemCounts[item.menuItemId] || 0) + 1;
+        const foodItem = item as any;
+        if (foodItem && foodItem.menuItemId) {
+          menuItemCounts[foodItem.menuItemId] = (menuItemCounts[foodItem.menuItemId] || 0) + 1;
         }
       }
     }
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({
-    currentlyBookedPeople,
+    reservationsToday,
     menuItemCount,
     mostPopularMenuItem,
   });

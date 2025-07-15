@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendMail } from '@/lib/emailer';
 import { emailTemplate } from '@/lib/emailTemplate';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../auth/auth.config';
 
 export async function GET(req, { params }) {
   const { id: restaurantId } = params;
@@ -106,6 +108,12 @@ export async function POST(req, { params }) {
   if (!assignedTableType) {
     return NextResponse.json({ error: 'Nenhuma mesa disponível para o horário e número de pessoas selecionados.' }, { status: 409 });
   }
+  // Get session for userId
+  const session = await getServerSession(authOptions);
+  let userId = null;
+  if (session && session.user && session.user.id) {
+    userId = session.user.id;
+  }
   // Create reservation
   const reservation = await prisma.reservation.create({
     data: {
@@ -117,6 +125,7 @@ export async function POST(req, { params }) {
       time: reqTime,
       paid: false,
       food: food || null,
+      userId: userId || undefined,
       tables: {
         create: [{ tableTypeId: assignedTableType.id, quantity: assignedQuantity }],
       },

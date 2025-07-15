@@ -42,6 +42,7 @@ export default function ReservationsPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'future' | 'concluded'>('all');
 
   // Table setup modal state
   const [tableInputs, setTableInputs] = useState([
@@ -197,6 +198,36 @@ export default function ReservationsPage() {
     }
   };
 
+  // Helper to get status for a reservation
+  function getReservationStatus(r: Reservation) {
+    const start = new Date(r.time);
+    const end = new Date(start.getTime() + reservationDuration * 60 * 60 * 1000);
+    const now = new Date();
+    if (now >= start && now < end) return 'A decorrer';
+    if (now >= end) return 'Concluída';
+    return 'Futura';
+  }
+
+  // Helper to get total price for a reservation
+  function getReservationTotal(r: Reservation) {
+    if (!Array.isArray(r.food)) return 0;
+    return r.food.reduce((sum, f) => sum + (Number(f.price) || 0) * (Number(f.quantity) || 0), 0);
+  }
+
+  // Filter and sort reservations
+  const filteredReservations = reservations
+    .filter(r => {
+      const status = getReservationStatus(r);
+      if (filter === 'future') return status === 'Futura';
+      if (filter === 'concluded') return status === 'Concluída';
+      return true;
+    })
+    .sort((a, b) => {
+      // Future first, then ongoing, then concluded
+      const statusOrder = { 'Futura': 0, 'A decorrer': 1, 'Concluída': 2 };
+      return statusOrder[getReservationStatus(a)] - statusOrder[getReservationStatus(b)] || new Date(a.time).getTime() - new Date(b.time).getTime();
+    });
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -221,12 +252,26 @@ export default function ReservationsPage() {
             className="w-full md:w-1/3 border rounded px-3 py-2 mb-4 md:mb-0"
             // onChange={...} // Add search logic if needed
           />
+          <div className="flex gap-2 mt-2 md:mt-0">
+            <button
+              className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFilter('all')}
+            >Todas</button>
+            <button
+              className={`px-3 py-1 rounded ${filter === 'future' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFilter('future')}
+            >Futuras</button>
+            <button
+              className={`px-3 py-1 rounded ${filter === 'concluded' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFilter('concluded')}
+            >Concluídas</button>
+          </div>
         </div>
         {loading ? (
           <div className="text-center py-10">A carregar reservas...</div>
         ) : error ? (
           <div className="text-center py-10 text-red-500">{error}</div>
-        ) : reservations.length === 0 ? (
+        ) : filteredReservations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10">
             <div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5M4.5 21h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v12A2.25 2.25 0 004.5 21z" /></svg>
@@ -245,19 +290,25 @@ export default function ReservationsPage() {
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pratos</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mesas</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hora</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
-                {reservations.map((r) => (
-                  <tr key={r.id}>
+                {filteredReservations.map((r) => {
+                  const start = new Date(r.time);
+                  const end = new Date(start.getTime() + reservationDuration * 60 * 60 * 1000);
+                  const status = getReservationStatus(r);
+                  return (
+                    <tr key={r.id}>
                     <td className="px-4 py-2 font-semibold">{r.name}</td>
                     <td className="px-4 py-2">
                       {Array.isArray(r.food) && r.food.length > 0 ? (
                         <ul className="list-disc ml-4">
                           {r.food.map((f, i) => (
-                            <li key={i}>{f.name} {f.quantity ? `x${f.quantity}` : ""}</li>
+                            <li key={i}>{f.name} {f.quantity ? `x${f.quantity}` : ""} {f.price !== undefined ? `(€${Number(f.price).toFixed(2)})` : ''}</li>
                           ))}
                         </ul>
                       ) : (
@@ -275,7 +326,13 @@ export default function ReservationsPage() {
                         <span className="text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-2">{new Date(r.time).toLocaleString()}</td>
+                    <td className="px-4 py-2">
+                      {`${start.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className={status === 'A decorrer' ? 'text-blue-600 font-bold' : status === 'Concluída' ? 'text-gray-500 font-bold' : 'text-yellow-600 font-bold'}>{status}</span>
+                    </td>
+                    <td className="px-4 py-2 font-semibold">€{getReservationTotal(r).toFixed(2)}</td>
                     <td className="px-4 py-2">
                       {r.paid ? (
                         <span className="text-green-600 font-bold">Sim</span>
@@ -304,7 +361,8 @@ export default function ReservationsPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>
@@ -320,14 +378,26 @@ export default function ReservationsPage() {
                 {selectedReservation.email && <div><span className="font-semibold">Email:</span> {selectedReservation.email}</div>}
                 {selectedReservation.phone && <div><span className="font-semibold">Telefone:</span> {selectedReservation.phone}</div>}
                 <div><span className="font-semibold">Data:</span> {format(new Date(selectedReservation.time), 'dd/MM/yyyy', { locale: pt })}</div>
-                <div><span className="font-semibold">Hora:</span> {format(new Date(selectedReservation.time), 'HH:mm', { locale: pt })}</div>
+                <div><span className="font-semibold">Hora:</span> {(() => {
+                  const start = new Date(selectedReservation.time);
+                  const end = new Date(start.getTime() + reservationDuration * 60 * 60 * 1000);
+                  return `${format(start, 'dd/MM/yyyy', { locale: pt })} ${format(start, 'HH:mm', { locale: pt })} - ${format(end, 'HH:mm', { locale: pt })}`;
+                })()}</div>
+                <div><span className="font-semibold">Estado:</span> {(() => {
+                  const start = new Date(selectedReservation.time);
+                  const end = new Date(start.getTime() + reservationDuration * 60 * 60 * 1000);
+                  const now = new Date();
+                  if (now >= start && now < end) return <span className="text-blue-600 font-bold">A decorrer</span>;
+                  if (now >= end) return <span className="text-gray-500 font-bold">Concluída</span>;
+                  return <span className="text-yellow-600 font-bold">Futura</span>;
+                })()}</div>
                 <div><span className="font-semibold">Nº de pessoas:</span> {selectedReservation.peopleCount}</div>
                 {Array.isArray(selectedReservation.food) && selectedReservation.food.length > 0 && (
                   <div>
                     <span className="font-semibold">Pratos:</span>
                     <ul className="list-disc ml-6 mt-1 text-base">
                       {selectedReservation.food.map((f: any, i: number) => (
-                        <li key={i}>{f.name} x{f.quantity}</li>
+                        <li key={i}>{f.name} x{f.quantity} {f.price !== undefined ? `(€${Number(f.price).toFixed(2)})` : ''}</li>
                       ))}
                     </ul>
                   </div>
@@ -342,6 +412,7 @@ export default function ReservationsPage() {
                     </ul>
                   </div>
                 )}
+                <div><span className="font-semibold">Total:</span> €{getReservationTotal(selectedReservation).toFixed(2)}</div>
                 <div><span className="font-semibold">Pago:</span> {selectedReservation.paid ? 'Sim' : 'Não'}</div>
               </div>
             </div>

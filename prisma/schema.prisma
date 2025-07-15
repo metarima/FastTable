@@ -72,6 +72,7 @@ model Restaurant {
   tableTypes    TableType[]
   reservations  Reservation[]
   reservationDuration Int @default(2) // Duration in hours for each reservation
+  views         RestaurantView[]
 }
 
 // RestaurantRequest model for pending restaurant registrations
@@ -151,4 +152,11 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model RestaurantView {
+  id           String     @id @default(cuid())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime   @default(now())
 }

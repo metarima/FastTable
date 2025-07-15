@@ -3,10 +3,22 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSession, signIn, signOut } from 'next-auth/react'
+import { useEffect, useState } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 
 export default function Home() {
   const { data: session } = useSession()
   const isRestaurantOwner = session?.user && (session.user as any).userType === 'restaurant'
+
+  // State for top restaurants
+  const [topRestaurants, setTopRestaurants] = useState<any[]>([]);
+  useEffect(() => {
+    fetch('/api/restaurants?top=3')
+      .then(res => res.json())
+      .then(data => setTopRestaurants(data))
+      .catch(() => setTopRestaurants([]));
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -128,6 +140,53 @@ export default function Home() {
               <p className="text-gray-600">Experimente uma refeição incrível no restaurante escolhido.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Top Restaurants Slideshow Section */}
+      <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+        <div className="container-custom">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-10">
+            Não sabe qual restaurante escolher? <span className="text-primary">Estes são os mais escolhidos!</span>
+          </h2>
+          {topRestaurants.length > 0 ? (
+            <div className="max-w-3xl mx-auto">
+              <Swiper
+                spaceBetween={30}
+                slidesPerView={1}
+                loop
+                autoplay={{ delay: 4000 }}
+                className="rounded-2xl shadow-xl bg-white"
+              >
+                {topRestaurants.map((r) => (
+                  <SwiperSlide key={r.id}>
+                    <div className="flex flex-col md:flex-row items-center gap-8 p-8">
+                      <div className="w-full md:w-1/2 flex justify-center">
+                        <div className="relative w-64 h-48 md:w-80 md:h-56 rounded-2xl overflow-hidden shadow-lg border-2 border-primary/20">
+                          <Image
+                            src={r.imageUrl || '/images/restaurant-placeholder.jpg'}
+                            alt={r.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 text-center md:text-left">
+                        <h3 className="text-2xl md:text-3xl font-bold mb-2 text-primary">{r.name}</h3>
+                        <p className="text-lg text-gray-600 mb-2">{r.cuisine}</p>
+                        <p className="text-gray-500 mb-4">Reservas: <span className="font-semibold text-blue-700">{r.reservationCount}</span></p>
+                        <Link href={`/restaurants/${r.id}`} className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-semibold shadow hover:bg-primary/90 transition">
+                          Ver Restaurante
+                        </Link>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+          ) : (
+            <div className="text-center text-gray-400 py-12">Carregando restaurantes mais escolhidos...</div>
+          )}
         </div>
       </section>
 

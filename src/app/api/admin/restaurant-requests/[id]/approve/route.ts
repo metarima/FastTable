@@ -60,7 +60,8 @@ export async function POST(
             name: restaurantRequest.ownerName || restaurantRequest.name,
             email: restaurantRequest.ownerEmail,
             password: restaurantRequest.password, // A senha já está hash do formulário de solicitação
-            userType: 'restaurant'
+            userType: 'restaurant',
+            emailVerified: new Date(),
           }
         })
       } else if (user.userType !== 'restaurant') {

@@ -10,11 +10,21 @@ export async function GET(
   try {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
+      include: {
+        tableTypes: true,
+      },
     });
     if (!restaurant || !restaurant.published) {
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 });
     }
-    return NextResponse.json({ restaurant });
+    // Map tableTypes to expected frontend format
+    const tables = (restaurant.tableTypes || []).map(t => ({
+      name: t.name,
+      min: t.minSeats,
+      max: t.maxSeats,
+      qtd: t.quantity,
+    }));
+    return NextResponse.json({ restaurant: { ...restaurant, tables } });
   } catch (error) {
     console.error('Error fetching restaurant by ID:', error);
     return NextResponse.json({ error: 'Erro ao buscar restaurante' }, { status: 500 });

@@ -6,6 +6,19 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCallback } from 'react';
 import Image from 'next/image';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 type Restaurant = {
   id: string
@@ -45,6 +58,11 @@ export default function RestaurantDashboard() {
   const [statsError, setStatsError] = useState('');
 
   const [publishSuccess, setPublishSuccess] = useState(false);
+
+  // --- New: Views & Reservations history state ---
+  const [history, setHistory] = useState<{views: any[], reservations: any[]} | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
 
   useEffect(() => {
     if (status === 'loading') return
@@ -136,6 +154,23 @@ export default function RestaurantDashboard() {
       }
     };
     fetchStats();
+    // Fetch history for graphs
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch('/api/restaurants/my-restaurant/stats/history');
+        if (res.ok) {
+          const data = await res.json();
+          setHistory(data);
+        } else {
+          setHistoryError('Erro ao carregar histórico');
+        }
+      } catch {
+        setHistoryError('Erro ao carregar histórico');
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    fetchHistory();
   }, [session, status, router])
 
   if (loading) {
@@ -233,9 +268,9 @@ export default function RestaurantDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
           <div className="text-4xl font-bold text-primary mb-2">
-            {statsLoading ? '...' : stats?.currentlyBookedPeople ?? '-'}
+            {statsLoading ? '...' : stats?.reservationsToday ?? '-'}
           </div>
-          <div className="text-gray-700 text-lg font-medium">Pessoas reservadas hoje</div>
+          <div className="text-gray-700 text-lg font-medium">Reservas hoje</div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
           <div className="text-4xl font-bold text-primary mb-2">
@@ -258,6 +293,77 @@ export default function RestaurantDashboard() {
             </>
           ) : (
             <div className="text-gray-500">Nenhum item popular hoje</div>
+          )}
+        </div>
+      </div>
+      {/* --- GRAPHS --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold mb-4">Visualizações do Restaurante (7 dias)</h2>
+          {historyLoading ? (
+            <div className="text-center text-gray-400">A carregar gráfico...</div>
+          ) : historyError ? (
+            <div className="text-center text-red-500">{historyError}</div>
+          ) : (
+            <Line
+              data={{
+                labels: history?.views.map((d: any) => d.date),
+                datasets: [
+                  {
+                    label: 'Visualizações',
+                    data: history?.views.map((d: any) => d.count),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.1)',
+                    tension: 0.3,
+                    fill: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                  title: { display: false },
+                },
+                scales: {
+                  y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                },
+              }}
+            />
+          )}
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold mb-4">Reservas (7 dias)</h2>
+          {historyLoading ? (
+            <div className="text-center text-gray-400">A carregar gráfico...</div>
+          ) : historyError ? (
+            <div className="text-center text-red-500">{historyError}</div>
+          ) : (
+            <Line
+              data={{
+                labels: history?.reservations.map((d: any) => d.date),
+                datasets: [
+                  {
+                    label: 'Reservas',
+                    data: history?.reservations.map((d: any) => d.count),
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34,197,94,0.1)',
+                    tension: 0.3,
+                    fill: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                  title: { display: false },
+                },
+                scales: {
+                  y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                },
+              }}
+            />
           )}
         </div>
       </div>
