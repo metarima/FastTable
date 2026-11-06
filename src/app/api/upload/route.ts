@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/auth.config';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
+  // Only signed-in users can upload images
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
   const formData = await request.formData();
   const file = formData.get('file') as File;
   if (!file) {

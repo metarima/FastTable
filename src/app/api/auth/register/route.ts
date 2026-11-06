@@ -9,10 +9,11 @@ const prisma = new PrismaClient()
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, userType } = await req.json()
+    // userType is ignored: public sign-up always creates a customer account
+    const { name, email, password } = await req.json()
 
     // Validate input
-    if (!email || !password || !name || !userType) {
+    if (!email || !password || !name) {
       return NextResponse.json(
         { error: 'Por favor, preencha todos os campos' },
         { status: 400 }
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        userType,
+        userType: 'customer',
       },
     })
 

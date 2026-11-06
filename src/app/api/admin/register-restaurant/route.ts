@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '../../auth/auth.config'
 
 const prisma = new PrismaClient()
 
 export async function POST(req: Request) {
   try {
+    // Admin only: public restaurant sign-ups go through /api/restaurant-request and need approval
+    const session = await getServerSession(authOptions)
+    if (!session || session.user.userType !== 'admin') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const { name, email, password, restaurantName, restaurantDescription, restaurantAddress } = await req.json()
 
     // Validate input
